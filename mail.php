@@ -12,21 +12,17 @@ try {
 
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    $sql = "INSERT INTO mailings (name, text, user_id) VALUES (:name, :text, :user_id)";
+    $sql = "INSERT INTO mailings (name, text, user_id)
+            SELECT :name, :text, users.id FROM users
+            LEFT JOIN mailings ON users.id = mailings.user_id AND mailings.sent = 1
+            WHERE mailings.id IS NULL";
     $stmt = $pdo->prepare($sql);
 
-    $stmt_users = $pdo->prepare("SELECT u.* FROM users u LEFT JOIN mailings m ON u.id = m.user_id AND m.sent = 1 WHERE m.id IS NULL");
-    $stmt_users->execute();
-    $users = $stmt_users->fetchAll(PDO::FETCH_ASSOC);
-
-    foreach ($users as $user) {
-        $name = 'Название рассылки';
-        $text = 'Текст рассылки';
-        $stmt->bindParam(':name', $name);
-        $stmt->bindParam(':text', $text);
-        $stmt->bindParam(':user_id', $user['id']);
-        $stmt->execute();
-    }
+    $name = 'Название рассылки';
+    $text = 'Текст рассылки';
+    $stmt->bindParam(':name', $name);
+    $stmt->bindParam(':text', $text);
+    $stmt->execute();
 
 } catch(PDOException $e) {
     echo "Connection failed: " . $e->getMessage();
